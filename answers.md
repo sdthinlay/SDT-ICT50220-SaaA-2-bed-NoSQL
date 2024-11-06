@@ -115,11 +115,13 @@ Query Solution:
 
 ```js
 	db.createCollection('movies');
+	db.movies.insertOne({Title: 'Fight Club', Writer: 'Chuck Palahniuk', Year: 1999, Actors: ['Brad Pitt', 'Edward Norton']});
+
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the creation of the database and the collection.
+> ![Embedding an Image Example](./images/step3.3.png)
 
 # Step 4: CRUD - Create
 
@@ -130,7 +132,22 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.insertMany([
+{Title: 'The Hobbit: An Unexpected Journey', Writer: 'J.R.R Tolkien', Year: 2012, Franchise: 'The Hobbit', RunningTime: 169, Budget: 200000000, BoxOffice: 101500000},
+{Title: 'Yet Another Fake Film Name'}, 
+{Title:'The Hobbit: The Desolation of Smaug',Writer: 'J.R.R. Tolkien',Year: 2013,Franchise: 'The Hobbit',RunningTime: 161,Budget: 230000000,BoxOffice: 959300000},
+{Title:'Inglorious Basterds', Writer: 'Quentin Tarantino', Year: 2009, Actors: ['Brad Pitt', 'Diane Kruger', 'Eli Roth'], RunningTime: 153, Budget: 70000000,BoxOffice: 321500000},
+{Title:	'Star Trek: Nemesis',Year:	2002,Writer:	['John Logan', 'Rick Berman', 'Brent Spiner'],Summary: 'A clone of Picard, created by the Romulans, assassinates the Romulan Senate, assumes absolute power, and lures Picard and the Enterprise to Romulus under the false pretext of a peace overture.',Franchise: 'Star Trek',RunningTime:117,Budget: 60000000,BoxOffice: 67300000},
+{Title: 'Avatar'},
+{Title: "Pee Wee Herman's Big Adventure", RunningTime: 91, Budget: 7000000, BoxOffice: 40900000},
+{Title:	'Pulp Fiction',Writer:	'Quentin Tarantino',Year:	1994,Actors: ['John Travolta', 'Uma Thurman'],RunningTime:154,Budget:	8000000,BoxOffice:213900000},
+{Title: 'Dummy Film Name'},
+{Title :	'The Hobbit: The Battle of the Five Armies',Writer : 'J.R.R. Tolkien',Year :	2012,Franchise :'The Hobbit',Synopsis : 'Bilbo and Company are forced to engage in a war against an array of combatants and keep the Lonely Mountain from falling into the hands of a rising darkness.',RunningTime: 144,Budget:	250000000,
+BoxOffice:940300000},
+  {Title: 'Another Fictional Film Name'},
+  {Title:'Star Trek VI: The Undiscovered Country',Year:1999,Franchise:'Star Trek',Writer:	['Nicholas Meyer', 'Denny Martin Flinn'],Summary:"When Qo'noS' moon Praxis (the Klingon Empire's chief energy source) is devastated by an explosion, caused by over-mining, the catastrophe also contaminating Qo'noS' atmosphere, the Klingons make peace overtures to the Federation. While on the way to Earth for a peace summit, the Klingon Chancellor is assassinated by Enterprise crewmen, and Kirk and McCoy are held accountable by the Chancellor's Chief of Staff and sentenced to life on a prison planet. Spock attempts to prove Kirk's innocence, but in doing so, uncovers a massive conspiracy against the peace process with participants from both sides.",RunningTime:110,
+Budget: 30000000, BoxOffice: 96800000}
+])
 ```
 
 # Step 5: CRUD - Retrieve Queries
@@ -142,7 +159,7 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find();
 ```
 	
 ## 5.2 Retrieve all films written by…
@@ -152,13 +169,12 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({Writer: {$in:["Quentin Tarantino"]}})
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the writer query.
-
+> ![Embedding an Image Example](./images/Step5.2.png)
 ## 5.3 Retrieve films with actor(s)…
 
 - Get all documents where `actors` include "Brad Pitt"
@@ -166,7 +182,7 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({Actors: {$in:["Brad Pitt"]}})
 ```
 	
 ## 5.4 Retrieve films from a franchise…
@@ -176,7 +192,7 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({Franchise: {$in:["The Hobbit"]}})
 ```
 	
 ## 5.5 Retrieve films before/after…
@@ -186,12 +202,17 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({$or: [
+{Year: {$lt: 1996}},
+{Year: {$gt:2010}}
+]
+})
 ```
 	
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the range query.
+> ![Embedding an Image Example](./images/Step5.5(1).png)
+![Embedding an Image Example](./images/Step5.5(2).png)
 
 ## 5.6 Retrieve films longer than…
 
@@ -200,7 +221,7 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({"RunningTime":{$gt:100}})
 ```
 
 # Step 6: CRUD - Updates
@@ -212,7 +233,16 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.updateOne(
+  {Title: "The Hobbit: The Desolation of Smaug"}, 
+  {$set: {Synopsis:"The dwarves, along with Bilbo Baggins and Gandalf the Grey, continue their quest to reclaim Erebor, their homeland, from Smaug. Bilbo Baggins is in possession of a mysterious and magical ring."}},
+  {upsert: true}
+)
+db.movies.updateOne(
+  {Title: "The Hobbit: An Unexpected Journey"}, 
+  {$set: {Synopsis:"A reluctant hobbit, Bilbo Baggins, sets out to the Lonely Mountain with a spirited group of dwarves to reclaim their mountain home - and the gold within it - from the dragon Smaug"}},
+  {upsert: true}
+)
 ```
 	
 ## 6.2 Update document with an actor
@@ -222,12 +252,34 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.updateOne(
+  {Title: "Pulp Fiction"}, 
+  {$set: {Actors: "Samuel L. Jackson"}},
+  {upsert: true}
+)
+db.movies.updateOne(
+  {Title: "Star Trek VI: The Undiscovered Country"}, 
+  {$set: {Actors: ["William Shatner", "Leonard Nimoy DeForest Kelley", "James Doohan", "Christopher Plummer"]}},
+  {upsert: true}
+)
+db.movies.updateOne(
+  {Title: "Star Trek: Nemesis"}, 
+  {$set: {Actors: ["Patrick Stewart", "Jonathan Frakes","Brent Spiner", "LeVar Burton","Michael Dorn", "Gates McFadden","Marina Sirtis"]}},
+  {upsert: true}
+)
+db.movies.updateOne(
+  {Title: "Star Trek VI: The Undiscovered Country"}, 
+  {$set: {Actors: ["Walter Koenig", "Nichelle Nichols","George Takei", "Kim Cattrall","David Warner"]}},
+  {upsert: true}
+)
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the update query.
+>![Embedding an Image Example](./images/Step6.2.1.png)
+![Embedding an Image Example](./images/Step6.2.2.png)
+![Embedding an Image Example](./images/Step6.2.3.png)
+![Embedding an Image Example](./images/Step6.2.4.png)
 
 # Step 7: CRUD – Searches
 
