@@ -292,7 +292,7 @@ Performing searches on collections.
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({ Title: { $regex: "F", $options: "i" } })
 ```
 
 ## 7.2 Searching for synopses with …
@@ -302,7 +302,7 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({ Synopsis: { $regex: "Gandalf", $options: "i" } })
 ```
 
 ## 7.3 Searching for synopses with… and not …
@@ -312,7 +312,12 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({
+  $and: [
+    { Synopsis: { $regex: "Bilbo", $options: "i" } },
+    { Synopsis: { $not: /Gandalf/i } }
+  ]
+})
 ```
 
 ## 7.4 Searching for synopses with … or …
@@ -322,12 +327,18 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({
+  $or: [
+    { Summary: { $regex: "Klingon", $options: "i" } },
+    { Summary: { $regex: "Romulan", $options: "i" } }
+  ]
+})
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the synopses search.
+> ![Embedding an Image Example](./images/Step7.4.1.png)
+>![Embedding an Image Example](./images/Step7.4.2.png)
 
 ## 7.5 Searching for synopses with … and …
 
@@ -336,7 +347,12 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.find({
+  $and: [
+    { Synopsis: { $regex: "gold", $options: "i" } },
+    { Synopsis: { $regex: "dragon", $options: "i" } }
+  ]
+})
 ```
 
 # Step 8: CRUD - Deletions
@@ -350,12 +366,12 @@ This step requires you to remove movies from the collection.
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.deleteOne({Title: "Pee Wee Herman's Big Adventure"})
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the delete query.
+> ![Embedding an Image Example](./images/Step8.1.png)
 
 ## 8.2 Remove a movie by ID…
 
@@ -364,7 +380,7 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.deleteOne({_id: ObjectId('672332482d3960fe833cbcab')})
 ```
 
 ## 8.3 Removing multiple movies…
@@ -374,7 +390,7 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.deleteOne({Title: {$regex: "Fiction"}})
 ```
 
 # Step 9: NoSQL Indexes
@@ -388,12 +404,13 @@ Using the movies collection, create the indexes to match the following condition
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.createIndex({ Title:1 })
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the creation index.
+> ![Embedding an Image Example](./images/Step9.1.png)
+
 
 ## 9.2 Indexing multiple fields
 
@@ -402,7 +419,7 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.createIndex({ Title:"text", Franchise: "text"})
 ```
 
 
@@ -413,12 +430,18 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.explain("executionStats").find({Title: {$regex: "Star", $options:'i'}})
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the execution plan.
+> ![Embedding an Image Example](./images/Step9.3.1.png)
+![Embedding an Image Example](./images/Step9.3.2.png)
+![Embedding an Image Example](./images/Step9.3.3.png)
+![Embedding an Image Example](./images/Step9.3.4.png)
+
+
+
 
 # Step 10: Aggregation
 
@@ -431,7 +454,7 @@ In this step you will be aggregating data within a collection.
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.countDocuments({Title: {$regex: "Star Trek", $options: "i"}})
 ```
 
 ## 10.2 Mean box office takings…
@@ -441,7 +464,7 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.aggregate([{$group: {_id: null, avg_boxoffice: {$avg: "$BoxOffice"}}}])
 ```
 
 ## 10.3 Profit earnings
@@ -451,12 +474,16 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.aggregate([{
+$project: {
+Title: 1, _id: 0, profit: {$subtract: ["$BoxOffice", "$Budget"]}
+}
+}])
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the profit calculation query.
+> ![Embedding an Image Example](./images/Step10.3.png)
 
 ## 10.4 Grouping data
 
@@ -465,7 +492,9 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movies.aggregate([
+  {$group: {_id: "$Franchise", Total: {$sum: 1}}}
+])
 ```
 
 # Step 11: Triggers
@@ -479,7 +508,15 @@ Using the movies collection, we are now going to create triggers to provide an a
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.createCollection("movie_audit")
+	function insertlog(data) {
+	db.movies.insertOne(data),
+	db.movie_audit.insertOne({
+	action: "INSERT",
+	action_date: new Date(),
+	original_data: data
+	})
+	}
 ```
 
 ## 11.2 Testing the insert trigger works correctly
@@ -489,7 +526,13 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	insertlog({
+	Title: "Jeffrey",
+	Writer: "Paul Rudnick",
+	Year: 1995,
+	Actor: ["Sigourney Weaver", "Patrick Stewart", "Michael T. Weiss", "Steven Weber", "Bryan Batt"],
+	BoxOffice: 3500000,
+})
 ```
 
 ## 11.3 Create trigger for updated data
@@ -499,12 +542,23 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	function updatelog(old_data, new_data){
+	const originalData = db.movies.findOne(old_data)
+	db.movies.updateOne(
+	old_data, {$addToSet: new_data}
+	)
+	const newData = db.movies.findOne(old_data)
+	db.movie_audit.insertOne({
+	action: "UPDATE",
+	action_data: new Date(),
+	original_data: originalData, 
+	data: newData
+	})
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the creation of the trigger.
+> ![Embedding an Image Example](./images/Step11.3.png)
 
 ## 11.4 Testing the update trigger works correctly
 
@@ -513,7 +567,23 @@ Screen Shot:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	updatelog(
+	{Title: "Avatar"},
+	{
+	Budget: 2370000, RunningTime: 162, Boxoffice:2923000000, Franchise: "Avatar"
+	}
+	)
+	updatelog(
+	{Title: "Avatar"},
+	{
+	Budget: 2370000, RunningTime: 162, Boxoffice:2923000000, Franchise: "Avatar"
+	}
+	)
+	updatelog(
+	{Title: "Avatar"},
+	{Actors: ["Sam Worthington", "Zoe Saldana", "Stephen Lang","Michelle Rodriguez", "Sigourney Weaver"]
+	}
+	)
 ```
 
 ## 11.5 Create trigger for deleted data
@@ -523,7 +593,16 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	function deletelog(data){
+	const old_data = db.movies.findOne(data)
+	db.movies.deleteOne(data)
+	db.movie_audit.insertOne({
+	action: "DELETE",
+	action_date: new Date(),
+	original_data: old_data
+	})  
+	}
+
 ```
 
 ## 11.6 Testing the delete trigger works correctly
@@ -533,7 +612,7 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	deletelog({Title: /Dummy/i})
 ```
 
 ## 11.7 Verify the log contains data…
@@ -543,13 +622,16 @@ Query Solution:
 Query Solution:
 
 ```js
-	db.collection_name.find();
+	db.movie_audit.find()
 ```
 
 Screen Shot:
 
-> Replace this line with a screenshot of the output from the movie audit log.
-
+> ![Embedding an Image Example](./images/Step11.7.1.png)
+![Embedding an Image Example](./images/Step11.7.2.png)
+![Embedding an Image Example](./images/Step11.7.3.png)
+![Embedding an Image Example](./images/Step11.7.4.png)
+![Embedding an Image Example](./images/Step11.7.5.png)
 
 
 # Step 12: Submission
