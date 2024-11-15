@@ -639,7 +639,7 @@ Screen Shot:
 What is the URL for your GitHub (or equivalent) repository for this assessment?
 
 ```text
-add url here
+https://github.com/sdthinlay/SDT-ICT50220-SaaS-2-bed-NoSQL.git
 ```
 
 # END
